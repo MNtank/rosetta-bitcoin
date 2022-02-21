@@ -76,7 +76,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
   && ln -fs /usr/share/zoneinfo/${local_timezone} /etc/localtime \
   && dpkg-reconfigure --frontend noninteractive tzdata \
   && apt-get update && \
-  apt-get install --no-install-recommends -y libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev && \
+  apt-get install --no-install-recommends -y libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev libboost-program-options1.71.0 libdb5.3++-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir -p /app \
@@ -87,7 +87,7 @@ RUN mkdir -p /app \
 WORKDIR /app
 
 # Copy binary from bitcoind-builder
-COPY --from=bitcoind-builder /app/bitcoind /app/bitcoind
+COPY --from=bitcoind-builder /app/eunod /app/eunod
 
 # Copy binary from rosetta-builder
 COPY --from=rosetta-builder /app/* /app/
