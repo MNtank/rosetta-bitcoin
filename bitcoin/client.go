@@ -163,11 +163,12 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 // NetworkStatus returns the *types.NetworkStatusResponse for
 // bitcoind.
 func (b *Client) NetworkStatus(ctx context.Context) (*types.NetworkStatusResponse, error) {
+	fmt.Println("in function")
 	rawBlock, err := b.getBlock(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to get current block", err)
 	}
-
+	fmt.Println("getblock done")
 	currentBlock, err := b.parseBlockData(rawBlock)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to parse current block", err)
