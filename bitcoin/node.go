@@ -15,78 +15,73 @@
 package bitcoin
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
-	"strings"
-
-	"github.com/MNtank/rosetta-bitcoin/utils"
 
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	bitcoindLogger       = "bitcoind"
-	bitcoindStdErrLogger = "bitcoind stderr"
+// bitcoindLogger       = "bitcoind"
+// bitcoindStdErrLogger = "bitcoind stderr"
 )
 
-func logPipe(ctx context.Context, pipe io.ReadCloser, identifier string) error {
-	logger := utils.ExtractLogger(ctx, identifier)
-	reader := bufio.NewReader(pipe)
-	for {
-		str, err := reader.ReadString('\n')
-		if err != nil {
-			logger.Warnw("closing logger", "error", err)
-			return err
-		}
+// func logPipe(ctx context.Context, pipe io.ReadCloser, identifier string) error {
+// 	logger := utils.ExtractLogger(ctx, identifier)
+// 	reader := bufio.NewReader(pipe)
+// 	for {
+// 		str, err := reader.ReadString('\n')
+// 		if err != nil {
+// 			logger.Warnw("closing logger", "error", err)
+// 			return err
+// 		}
 
-		message := strings.ReplaceAll(str, "\n", "")
-		messages := strings.SplitAfterN(message, " ", 2)
+// 		message := strings.ReplaceAll(str, "\n", "")
+// 		messages := strings.SplitAfterN(message, " ", 2)
 
-		// Trim the timestamp from the log if it exists
-		if len(messages) > 1 {
-			message = messages[1]
-		}
+// 		// Trim the timestamp from the log if it exists
+// 		if len(messages) > 1 {
+// 			message = messages[1]
+// 		}
 
-		// Print debug log if from bitcoindLogger
-		if identifier == bitcoindLogger {
-			logger.Debugw(message)
-			continue
-		}
+// 		// Print debug log if from bitcoindLogger
+// 		if identifier == bitcoindLogger {
+// 			logger.Debugw(message)
+// 			continue
+// 		}
 
-		logger.Warnw(message)
-	}
-}
+// 		logger.Warnw(message)
+// 	}
+// }
 
 // StartBitcoind starts a bitcoind daemon in another goroutine
 // and logs the results to the console.
 func StartBitcoind(ctx context.Context, configPath string, g *errgroup.Group) error {
-	logger := utils.ExtractLogger(ctx, "bitcoind")
+	// logger := utils.ExtractLogger(ctx, "bitcoind")
 	cmd := exec.Command(
 		"/app/eunod",
 		fmt.Sprintf("-conf=%s", configPath),
 	) // #nosec G204
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
+	// stdout, err := cmd.StdoutPipe()
+	// if err != nil {
+	// 	return err
+	// }
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
+	// stderr, err := cmd.StderrPipe()
+	// if err != nil {
+	// 	return err
+	// }
 
-	g.Go(func() error {
-		return logPipe(ctx, stdout, bitcoindLogger)
-	})
+	// g.Go(func() error {
+	// 	return logPipe(ctx, stdout, bitcoindLogger)
+	// })
 
-	g.Go(func() error {
-		return logPipe(ctx, stderr, bitcoindStdErrLogger)
-	})
+	// g.Go(func() error {
+	// 	return logPipe(ctx, stderr, bitcoindStdErrLogger)
+	// })
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("%w: unable to start bitcoind", err)
@@ -95,7 +90,7 @@ func StartBitcoind(ctx context.Context, configPath string, g *errgroup.Group) er
 	g.Go(func() error {
 		<-ctx.Done()
 
-		logger.Warnw("sending interrupt to bitcoind")
+		// logger.Warnw("sending interrupt to bitcoind")
 		return cmd.Process.Signal(os.Interrupt)
 	})
 
