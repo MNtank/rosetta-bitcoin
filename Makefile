@@ -2,7 +2,7 @@
 	run-testnet-offline check-comments add-license check-license shorten-lines test \
 	coverage spellcheck salus build-local coverage-local format check-format
 
-ADDLICENSE_INSTALL=go install github.com/google/addlicense@latest
+ADDLICENSE_INSTALL=go get github.com/google/addlicense@latest
 ADDLICENSE_CMD=addlicense
 ADDLICENCE_SCRIPT=${ADDLICENSE_CMD} -c "Coinbase, Inc." -l "apache" -v
 SPELLCHECK_CMD=go run github.com/client9/misspell/cmd/misspell
