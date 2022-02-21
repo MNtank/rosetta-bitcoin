@@ -21,20 +21,13 @@ WORKDIR /app
 
 # Source: https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md#ubuntu--debian
 RUN apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
-  libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python-pip libzmq3-dev wget
+  libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python2 libzmq3-dev wget
 
 # VERSION: Bitcoin Core 0.20.1
-RUN git clone https://github.com/bitcoin/bitcoin \
-  && cd bitcoin \
-  && git checkout 7ff64311bee570874c4f0dfa18f518552188df08
+RUN wget https://bitcoincore.org/bin/bitcoin-core-22.0/bitcoin-22.0-x86_64-linux-gnu.tar.gz && tar zxvf bitcoin-22.0-x86_64-linux-gnu.tar.gz
 
-RUN cd bitcoin \
-  && ./autogen.sh \
-  && ./configure --disable-tests --without-miniupnpc --without-gui --with-incompatible-bdb --disable-hardening --disable-zmq --disable-bench --disable-wallet \
-  && make
-
-RUN mv bitcoin/src/bitcoind /app/bitcoind \
-  && rm -rf bitcoin
+RUN mv bitcoin-22.0/bin/bitcoind /app/bitcoind \
+  && rm -rf bitcoin-22.0
 
 # Build Rosetta Server Components
 FROM ubuntu:20.04 as rosetta-builder
