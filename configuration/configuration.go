@@ -62,7 +62,7 @@ const (
 	mainnetTransactionDictionary = "/app/mainnet-transaction.zstd"
 
 	mainnetRPCPort = 46461
-	testnetRPCPort = 18332
+	testnetRPCPort = 46463
 
 	// min prune depth is 288:
 	// https://github.com/bitcoin/bitcoin/blob/ad2952d17a2af419a04256b10b53c7377f826a27/src/validation.h#L84
