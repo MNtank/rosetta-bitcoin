@@ -88,7 +88,7 @@ a data directory at `<working directory>/bitcoin-data` and the Rosetta API acces
 
 #### Mainnet:Online
 ```text
-docker run -d --rm --ulimit "nofile=100000:100000" -v "$(pwd)/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 8333:8333 rosetta-bitcoin:latest
+docker run -d --rm --ulimit "nofile=100000:100000" -v "$(pwd)/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 46462:46462 rosetta-bitcoin:latest
 ```
 _If you cloned the repository, you can run `make run-mainnet-online`._
 
