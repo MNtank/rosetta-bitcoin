@@ -61,7 +61,7 @@ const (
 	testnetTransactionDictionary = "/app/testnet-transaction.zstd"
 	mainnetTransactionDictionary = "/app/mainnet-transaction.zstd"
 
-	mainnetRPCPort = 8332
+	mainnetRPCPort = 46461
 	testnetRPCPort = 18332
 
 	// min prune depth is 288:
