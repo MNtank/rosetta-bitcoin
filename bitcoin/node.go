@@ -67,7 +67,7 @@ func StartBitcoind(ctx context.Context, configPath string, g *errgroup.Group) er
 	logger := utils.ExtractLogger(ctx, "bitcoind")
 	cmd := exec.Command(
 		"/app/eunod",
-		fmt.Sprintf("--conf=%s", configPath),
+		fmt.Sprintf("-conf=%s", configPath),
 	) // #nosec G204
 
 	stdout, err := cmd.StdoutPipe()

@@ -1,6 +1,6 @@
 {
   "network": {
-    "blockchain": "Bitcoin",
+    "blockchain": "Euno",
     "network": "Testnet3"
   },
   "data_directory": "cli-data",
