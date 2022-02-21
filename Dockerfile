@@ -20,7 +20,11 @@ RUN mkdir -p /app \
 WORKDIR /app
 
 # Source: https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md#ubuntu--debian
-RUN apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
+  && apt-get -y install tzdata \
+  && ln -fs /usr/share/zoneinfo/${local_timezone} /etc/localtime \
+  && dpkg-reconfigure --frontend noninteractive tzdata \
+  && apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
   libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python2 libzmq3-dev wget
 
 # VERSION: Bitcoin Core 0.20.1
@@ -62,7 +66,11 @@ RUN cd src \
 ## Build Final Image
 FROM ubuntu:20.04
 
-RUN apt-get update && \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
+  && apt-get -y install tzdata \
+  && ln -fs /usr/share/zoneinfo/${local_timezone} /etc/localtime \
+  && dpkg-reconfigure --frontend noninteractive tzdata \
+  && apt-get update && \
   apt-get install --no-install-recommends -y libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
