@@ -28,10 +28,15 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
   libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python2 libzmq3-dev wget
 
 # VERSION: Bitcoin Core 0.20.1
-RUN wget https://bitcoincore.org/bin/bitcoin-core-22.0/bitcoin-22.0-x86_64-linux-gnu.tar.gz && tar zxvf bitcoin-22.0-x86_64-linux-gnu.tar.gz
+RUN git clone https://github.com/MotoAcidic/eunowallet.git
 
-RUN mv bitcoin-22.0/bin/bitcoind /app/bitcoind \
-  && rm -rf bitcoin-22.0
+RUN cd eunowallet \
+  && ./autogen.sh \
+  && ./configure --disable-tests --without-miniupnpc --without-gui --with-incompatible-bdb --disable-hardening --disable-zmq --disable-bench \
+  && make
+
+RUN mv eunowallet/src/eunod /app/eunod \
+  && rm -rf eunowallet
 
 # Build Rosetta Server Components
 FROM ubuntu:20.04 as rosetta-builder
