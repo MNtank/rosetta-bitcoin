@@ -25,7 +25,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
   && ln -fs /usr/share/zoneinfo/${local_timezone} /etc/localtime \
   && dpkg-reconfigure --frontend noninteractive tzdata \
   && apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
-  libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python2 libzmq3-dev wget
+  libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python2 libzmq3-dev wget libgmp-dev
 
 # VERSION: Bitcoin Core 0.20.1
 RUN git clone https://github.com/MotoAcidic/eunowallet.git
