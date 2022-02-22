@@ -38,9 +38,9 @@ var EunoMainNetParams = chaincfg.Params{
 	GenesisHash:  &genesisHash,
 
 	// Address encoding magics
-	PubKeyHashAddrID:        139,
-	ScriptHashAddrID:        19,
-	PrivateKeyID:            239,
+	PubKeyHashAddrID:        0x81,
+	ScriptHashAddrID:        0x13,
+	PrivateKeyID:            0xEF,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
@@ -50,7 +50,7 @@ var EunoMainNetParams = chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 303,
+	HDCoinType: 0x8000012f,
 }
 
 var EunoRegressionNetParams = chaincfg.Params{
@@ -65,7 +65,7 @@ var EunoRegressionNetParams = chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 303,
+	HDCoinType: 0x8000012f,
 }
 
 var EunoTestNet3Params = chaincfg.Params{
@@ -79,9 +79,9 @@ var EunoTestNet3Params = chaincfg.Params{
 	GenesisHash:  &testNet3GenesisHash,
 
 	// Address encoding magics
-	PubKeyHashAddrID:        139,
-	ScriptHashAddrID:        19,
-	PrivateKeyID:            239,
+	PubKeyHashAddrID:        0x81,
+	ScriptHashAddrID:        0x13,
+	PrivateKeyID:            0xEF,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
@@ -89,7 +89,7 @@ var EunoTestNet3Params = chaincfg.Params{
 	HDPrivateKeyID: [4]byte{0x3a, 0x80, 0x58, 0x37},
 	HDPublicKeyID:  [4]byte{0x3a, 0x80, 0x61, 0xa0},
 
-	HDCoinType: 303,
+	HDCoinType: 0x8000012f,
 }
 
 func newHashFromStr(hexStr string) *chainhash.Hash {
