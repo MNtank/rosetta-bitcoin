@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/MNtank/rosetta-bitcoin/bitcoin"
-	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/coinbase/rosetta-sdk-go/storage/encoder"
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -112,7 +111,7 @@ type PruningConfiguration struct {
 type Configuration struct {
 	Mode                   Mode
 	Network                *types.NetworkIdentifier
-	Params                 *chaincfg.Params
+	Params                 *bitcoin.Param
 	Currency               *types.Currency
 	GenesisBlockIdentifier *types.BlockIdentifier
 	Port                   int
