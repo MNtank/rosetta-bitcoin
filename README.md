@@ -29,10 +29,6 @@ information [here](https://rosetta-api.org).
 * UTXO cache for all accounts (accessible using the Rosetta `/account/balance` API)
 * Stateless, offline, curve-based transaction construction from any SegWit-Bech32 Address
 
-## System Requirements
-`rosetta-bitcoin` has been tested on an [AWS c5.2xlarge instance](https://aws.amazon.com/ec2/instance-types/c5).
-This instance type has 8 vCPU and 16 GB of RAM.
-
 ### Network Settings
 To increase the load `rosetta-bitcoin` can handle, it is recommended to tune your OS
 settings to allow for more connections. On a linux-based OS, you can run the following commands ([source](http://www.tweaked.io/guide/kernel)):
@@ -100,7 +96,7 @@ _If you cloned the repository, you can run `make run-mainnet-offline`._
 
 #### Testnet:Online
 ```text
-docker run -d --rm --ulimit "nofile=100000:100000" -v "$(pwd)/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 18333:18333 rosetta-bitcoin:latest
+docker run -d --rm --ulimit "nofile=100000:100000" -v "$(pwd)/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 46464:46464 rosetta-bitcoin:latest
 ```
 _If you cloned the repository, you can run `make run-testnet-online`._
 
