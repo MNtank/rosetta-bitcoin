@@ -40,7 +40,7 @@ var EunoMainNetParams = chaincfg.Params{
 	// Address encoding magics
 	PubKeyHashAddrID:        0x21,
 	ScriptHashAddrID:        0x11,
-	PrivateKeyID:            0x09,
+	PrivateKeyID:            0x9,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
@@ -81,7 +81,7 @@ var EunoTestNet3Params = chaincfg.Params{
 	// Address encoding magics
 	PubKeyHashAddrID:        0x21,
 	ScriptHashAddrID:        0x11,
-	PrivateKeyID:            0x09,
+	PrivateKeyID:            0x9,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
