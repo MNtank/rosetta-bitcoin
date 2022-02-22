@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -92,7 +91,7 @@ var (
 	}
 
 	// MainnetParams are the params for mainnet.
-	MainnetParams = &chaincfg.MainNetParams
+	MainnetParams = &MainNetParams
 
 	// MainnetCurrency is the *types.Currency for mainnet.
 	MainnetCurrency = &types.Currency{
@@ -106,7 +105,7 @@ var (
 	}
 
 	// TestnetParams are the params for testnet.
-	TestnetParams = &chaincfg.TestNet3Params
+	TestnetParams = &TestNet3Params
 
 	// TestnetCurrency is the *types.Currency for testnet.
 	TestnetCurrency = &types.Currency{

@@ -2,11 +2,9 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package eunod
+package bitcoin
 
 import (
-	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"math/big"
 	"strings"
@@ -16,80 +14,31 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-// These variables are the chain proof-of-work limit parameters for each default
-// network.
 var (
-	// bigOne is 1 represented as a big.Int.  It is defined here to avoid
-	// the overhead of creating it multiple times.
 	bigOne = big.NewInt(1)
 
-	// mainPowLimit is the highest proof of work value a Bitcoin block can
-	// have for the main network.  It is the value 2^224 - 1.
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
+	mainPowLimit   = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 20), bigOne)
+	mainPowLimitV1 = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 24), bigOne)
+	mainPowLimitV2 = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 20), bigOne)
 
-	// regressionPowLimit is the highest proof of work value a Bitcoin block
-	// can have for the regression test network.  It is the value 2^255 - 1.
 	regressionPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
-	// testNet3PowLimit is the highest proof of work value a Bitcoin block
-	// can have for the test network (version 3).  It is the value
-	// 2^224 - 1.
 	testNet3PowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
-
-	// simNetPowLimit is the highest proof of work value a Bitcoin block
-	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
-
-	// sigNetPowLimit is the highest proof of work value a bitcoin block can
-	// have for the signet test network. It is the value 0x0377ae << 216.
-	sigNetPowLimit = new(big.Int).Lsh(new(big.Int).SetInt64(0x0377ae), 216)
-
-	// DefaultSignetChallenge is the byte representation of the signet
-	// challenge for the default (public, Taproot enabled) signet network.
-	// This is the binary equivalent of the bitcoin script
-	//  1 03ad5e0edad18cb1f0fc0d28a3d4f1f3e445640337489abb10404f2d1e086be430
-	//  0359ef5021964fe22d6f8e05b2463c9540ce96883fe3b278760f048f5189f2e6c4 2
-	//  OP_CHECKMULTISIG
-	DefaultSignetChallenge, _ = hex.DecodeString(
-		"512103ad5e0edad18cb1f0fc0d28a3d4f1f3e445640337489abb10404f2d" +
-			"1e086be430210359ef5021964fe22d6f8e05b2463c9540ce9688" +
-			"3fe3b278760f048f5189f2e6c452ae",
-	)
-
-	// DefaultSignetDNSSeeds is the list of seed nodes for the default
-	// (public, Taproot enabled) signet network.
-	DefaultSignetDNSSeeds = []DNSSeed{
-		{"178.128.221.177", false},
-		{"2a01:7c8:d005:390::5", false},
-		{"v7ajjeirttkbnt32wpy3c6w3emwnfr3fkla7hpxcfokr3ysd3kqtzmqd.onion:38333", false},
-	}
 )
 
-// Checkpoint identifies a known good point in the block chain.  Using
-// checkpoints allows a few optimizations for old blocks during initial download
-// and also prevents forks from old blocks.
-//
-// Each checkpoint is selected based upon several factors.  See the
-// documentation for blockchain.IsCheckpointCandidate for details on the
-// selection criteria.
 type Checkpoint struct {
 	Height int32
 	Hash   *chainhash.Hash
 }
 
-// DNSSeed identifies a DNS seed.
 type DNSSeed struct {
-	// Host defines the hostname of the seed.
-	Host string
-
-	// HasFiltering defines whether the seed supports filtering
-	// by service flags (wire.ServiceFlag).
+	Host         string
 	HasFiltering bool
 }
 
-// ConsensusDeployment defines details related to a specific consensus rule
-// change that is voted in.  This is part of BIP0009.
 type ConsensusDeployment struct {
+	ActivationHeight    uint32
+	hashActivationBlock string
 	// BitNumber defines the specific bit number within the block version
 	// this particular soft-fork deployment refers to.
 	BitNumber uint8
@@ -140,6 +89,19 @@ const (
 	// includes the deployment of BIPS 141, 142, 144, 145, 147 and 173.
 	DeploymentSegwit
 
+	//pivx network upgrades
+	UpgradeBaseNetwork
+	UpgradeTestDummy
+	UpgradePOS
+	UpgradePOSV2
+	UpgradeZC
+	UpgradeZCV2
+	UpgradeBIP65
+	UpgradeZCPublic
+	UpgradeV34
+	UpgradeV40
+	UpgradeV50Dummy
+
 	// NOTE: DefinedDeployments must always come last since it is used to
 	// determine how many defined deployments there currently are.
 
@@ -151,32 +113,62 @@ const (
 // used by Bitcoin applications to differentiate networks as well as addresses
 // and keys for one network from those intended for use on another network.
 type Params struct {
-	// Name defines a human-readable identifier for the network.
-	Name string
-
-	// Net defines the magic bytes used to identify the network.
-	Net wire.BitcoinNet
-
-	// DefaultPort defines the default peer-to-peer port for the network.
-	DefaultPort string
-
-	// DNSSeeds defines a list of DNS seeds for the network that are used
-	// as one method to discover peers.
-	DNSSeeds []DNSSeed
-
-	// GenesisBlock defines the first block of the chain.
+	Name         string
+	Net          wire.BitcoinNet
+	DefaultPort  string
+	DNSSeeds     []DNSSeed
 	GenesisBlock *wire.MsgBlock
+	GenesisHash  *chainhash.Hash
 
-	// GenesisHash is the starting block hash.
-	GenesisHash *chainhash.Hash
+	PowAllowMinDifficultyBlocks bool
+	PowLimit                    *big.Int
+	PowLimitV1                  *big.Int
+	PowLimitV2                  *big.Int
+	BudgetCycleBlocks           int32
+	BudgetFeeConfirmations      int32
+	CoinbaseMaturity            uint16
+	FutureTimeDriftPoW          int32
+	FutureTimeDriftPoS          int32
+	PoolMaxTransactions         int32
+	ProposalEstablishmentTime   int
+	StakeMinAge                 int
+	StakeMinDepth               int
+	TargetTimespan              time.Duration
+	TargetTimespanV2            time.Duration
+	TargetSpacing               time.Duration
+	TimeSlotLength              time.Duration
+	strSporkPubKey              string
+	strSporkPubKeyOld           string
+	Time_EnforceNewSporkKey     uint
+	Time_RejectOldSporkKey      uint
 
-	// PowLimit defines the highest allowed proof of work value for a block
-	// as a uint256.
-	PowLimit *big.Int
+	height_last_ZC_AccumCheckpoint   int32
+	height_last_ZC_WrappedSerials    int32
+	height_start_InvalidUTXOsCheck   int32
+	height_start_ZC_InvalidSerials   int32
+	height_start_ZC_SerialRangeCheck int32
+	height_ZC_RecalcAccumulators     int32
 
-	// PowLimitBits defines the highest allowed proof of work value for a
-	// block in compact form.
-	PowLimitBits uint32
+	PivxBadBlockTime int
+	PivxBadBlockBits uint
+
+	//checkpoints
+	Checkpoints []Checkpoint
+
+	Upgrades [DefinedDeployments]ConsensusDeployment
+
+	// Address encoding magics
+	PubKeyHashAddrID byte
+	ScriptHashAddrID byte
+	PrivateKeyID     byte
+	StakingKeyID     byte
+
+	HDPrivateKeyID [4]byte
+	HDPublicKeyID  [4]byte
+
+	HDCoinType uint32
+
+	Deployments [DefinedDeployments]ConsensusDeployment
 
 	// These fields define the block heights at which the specified softfork
 	// BIP became active.
@@ -184,19 +176,9 @@ type Params struct {
 	BIP0065Height int32
 	BIP0066Height int32
 
-	// CoinbaseMaturity is the number of blocks required before newly mined
-	// coins (coinbase transactions) can be spent.
-	CoinbaseMaturity uint16
-
 	// SubsidyReductionInterval is the interval of blocks before the subsidy
 	// is reduced.
 	SubsidyReductionInterval int32
-
-	// TargetTimespan is the desired amount of time that should elapse
-	// before the block difficulty requirement is examined to determine how
-	// it should be changed in order to maintain the desired block
-	// generation rate.
-	TargetTimespan time.Duration
 
 	// TargetTimePerBlock is the desired amount of time to generate each
 	// block.
@@ -223,7 +205,6 @@ type Params struct {
 	GenerateSupported bool
 
 	// Checkpoints ordered from oldest to newest.
-	Checkpoints []Checkpoint
 
 	// These fields are related to voting on consensus rule changes as
 	// defined by BIP0009.
@@ -240,159 +221,131 @@ type Params struct {
 	// on.
 	RuleChangeActivationThreshold uint32
 	MinerConfirmationWindow       uint32
-	Deployments                   [DefinedDeployments]ConsensusDeployment
 
 	// Mempool parameters
 	RelayNonStdTxs bool
 
-	// Human-readable part for Bech32 encoded segwit addresses, as defined
-	// in BIP 173.
-	Bech32HRPSegwit string
-
-	// Address encoding magics
-	PubKeyHashAddrID        byte // First byte of a P2PKH address
-	ScriptHashAddrID        byte // First byte of a P2SH address
-	PrivateKeyID            byte // First byte of a WIF private key
 	WitnessPubKeyHashAddrID byte // First byte of a P2WPKH address
 	WitnessScriptHashAddrID byte // First byte of a P2WSH address
 
-	// BIP32 hierarchical deterministic extended key magics
-	HDPrivateKeyID [4]byte
-	HDPublicKeyID  [4]byte
-
-	// BIP44 coin type used in the hierarchical deterministic path for
-	// address generation.
-	HDCoinType uint32
 }
+
+// Constants used to indicate the message dogecoin network.
+const (
+	// MainNet represents the main dogecoin network.
+	MainNet wire.BitcoinNet = 0xe9fdc490
+
+	// TestNet3 represents the test network (version 3).
+	TestNet3 wire.BitcoinNet = 0xba657645
+)
 
 // MainNetParams defines the network parameters for the main Bitcoin network.
 var MainNetParams = Params{
 	Name:        "mainnet",
-	Net:         wire.MainNet,
-	DefaultPort: "8333",
+	Net:         MainNet,
+	DefaultPort: "46462",
 	DNSSeeds: []DNSSeed{
-		{"seed.bitcoin.sipa.be", true},
-		{"dnsseed.bluematt.me", true},
-		{"dnsseed.bitcoin.dashjr.org", false},
-		{"seed.bitcoinstats.com", true},
-		{"seed.bitnodes.io", false},
-		{"seed.bitcoin.jonasschnelli.ch", true},
+		{"seed.euno.network", true},
 	},
 
 	// Chain parameters
-	GenesisBlock:             &genesisBlock,
-	GenesisHash:              &genesisHash,
-	PowLimit:                 mainPowLimit,
-	PowLimitBits:             0x1d00ffff,
-	BIP0034Height:            227931, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
-	BIP0065Height:            388381, // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
-	BIP0066Height:            363725, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
-	CoinbaseMaturity:         100,
-	SubsidyReductionInterval: 210000,
-	TargetTimespan:           time.Hour * 24 * 14, // 14 days
-	TargetTimePerBlock:       time.Minute * 10,    // 10 minutes
-	RetargetAdjustmentFactor: 4,                   // 25% less, 400% more
-	ReduceMinDifficulty:      false,
-	MinDiffReductionTime:     0,
-	GenerateSupported:        false,
+	GenesisBlock:                &genesisBlock,
+	GenesisHash:                 &genesisHash,
+	PowAllowMinDifficultyBlocks: false,
+	PowLimit:                    mainPowLimit,
+	PowLimitV1:                  mainPowLimitV1,
+	PowLimitV2:                  mainPowLimitV2,
+	BudgetCycleBlocks:           43200,
+	BudgetFeeConfirmations:      6,
+	CoinbaseMaturity:            100,
+	FutureTimeDriftPoW:          7200,
+	FutureTimeDriftPoS:          180,
+	PoolMaxTransactions:         3,
+	ProposalEstablishmentTime:   60 * 60 * 24,
+	StakeMinAge:                 60 * 60,
+	StakeMinDepth:               600,
+	TargetTimespan:              time.Minute * 40 * 60, // 14 days
+	TargetTimespanV2:            time.Minute * 30 * 60, // 14 days
+	TargetSpacing:               time.Minute * 1 * 60,
+	TimeSlotLength:              15,
+
+	//spork keys
+	strSporkPubKey:          "04653C23ED96425AE787AE88884CC53F30921D12B6BAA827B737CE845782C7A0FD1F226575EB99520F2ED03E55DC51FC817B640C1A822874B0CBF25924DE87C947",
+	strSporkPubKeyOld:       "04653C23ED96425AE787AE88884CC53F30921D12B6BAA827B737CE845782C7A0FD1F226575EB99520F2ED03E55DC51FC817B640C1A822874B0CBF25924DE87C947",
+	Time_EnforceNewSporkKey: 1566860400,
+	Time_RejectOldSporkKey:  1569538800,
+
+	// height-based activations
+	height_last_ZC_AccumCheckpoint:   1441,
+	height_last_ZC_WrappedSerials:    1441,
+	height_start_InvalidUTXOsCheck:   1441,
+	height_start_ZC_InvalidSerials:   1441,
+	height_start_ZC_SerialRangeCheck: 1441,
+	height_ZC_RecalcAccumulators:     1441,
+
+	// validation by-pass
+	PivxBadBlockTime: 1471401614,
+	PivxBadBlockBits: 0x1c056dac,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{
-		{11111, newHashFromStr("0000000069e244f73d78e8fd29ba2fd2ed618bd6fa2ee92559f542fdb26e7c1d")},
-		{33333, newHashFromStr("000000002dd5588a74784eaa7ab0507a18ad16a236e7b1ce69f00d7ddfb5d0a6")},
-		{74000, newHashFromStr("0000000000573993a3c9e41ce34471c079dcf5f52a0e824a81e7f953b8661a20")},
-		{105000, newHashFromStr("00000000000291ce28027faea320c8d2b054b2e0fe44a773f3eefb151d6bdc97")},
-		{134444, newHashFromStr("00000000000005b12ffd4cd315cd34ffd4a594f430ac814c91184a0d42d2b0fe")},
-		{168000, newHashFromStr("000000000000099e61ea72015e79632f216fe6cb33d7899acb35b75c8303b763")},
-		{193000, newHashFromStr("000000000000059f452a5f7340de6682a977387c17010ff6e6c3bd83ca8b1317")},
-		{210000, newHashFromStr("000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e")},
-		{216116, newHashFromStr("00000000000001b4f4b433e81ee46494af945cf96014816a4e2370f11b23df4e")},
-		{225430, newHashFromStr("00000000000001c108384350f74090433e7fcf79a606b8e797f065b130575932")},
-		{250000, newHashFromStr("000000000000003887df1f29024b06fc2200b55f8af8f35453d7be294df2d214")},
-		{267300, newHashFromStr("000000000000000a83fbd660e918f218bf37edd92b748ad940483c7c116179ac")},
-		{279000, newHashFromStr("0000000000000001ae8c72a0b0c301f67e3afca10e819efa9041e458e9bd7e40")},
-		{300255, newHashFromStr("0000000000000000162804527c6e9b9f0563a280525f9d08c12041def0a0f3b2")},
-		{319400, newHashFromStr("000000000000000021c6052e9becade189495d1c539aa37c58917305fd15f13b")},
-		{343185, newHashFromStr("0000000000000000072b8bf361d01a6ba7d445dd024203fafc78768ed4368554")},
-		{352940, newHashFromStr("000000000000000010755df42dba556bb72be6a32f3ce0b6941ce4430152c9ff")},
-		{382320, newHashFromStr("00000000000000000a8dc6ed5b133d0eb2fd6af56203e4159789b092defd8ab2")},
-		{400000, newHashFromStr("000000000000000004ec466ce4732fe6f1ed1cddc2ed4b328fff5224276e3f6f")},
-		{430000, newHashFromStr("000000000000000001868b2bb3a285f3cc6b33ea234eb70facf4dcdf22186b87")},
-		{460000, newHashFromStr("000000000000000000ef751bbce8e744ad303c47ece06c8d863e4d417efc258c")},
-		{490000, newHashFromStr("000000000000000000de069137b17b8d5a3dfbd5b145b2dcfb203f15d0c4de90")},
-		{520000, newHashFromStr("0000000000000000000d26984c0229c9f6962dc74db0a6d525f2f1640396f69c")},
-		{550000, newHashFromStr("000000000000000000223b7a2298fb1c6c75fb0efc28a4c56853ff4112ec6bc9")},
-		{560000, newHashFromStr("0000000000000000002c7b276daf6efb2b6aa68e2ce3be67ef925b3264ae7122")},
+		{0, newHashFromStr("0000000069e244f73d78e8fd29ba2fd2ed618bd6fa2ee92559f542fdb26e7c1d")},
 	},
 
-	// Consensus rule change deployments.
-	//
-	// The miner confirmation window is defined as:
-	//   target proof of work timespan / target proof of work spacing
-	RuleChangeActivationThreshold: 1916, // 95% of MinerConfirmationWindow
-	MinerConfirmationWindow:       2016, //
-	Deployments: [DefinedDeployments]ConsensusDeployment{
-		DeploymentTestDummy: {
-			BitNumber: 28,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Unix(11991456010, 0), // January 1, 2008 UTC
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Unix(1230767999, 0), // December 31, 2008 UTC
-			),
+	Upgrades: [DefinedDeployments]ConsensusDeployment{
+		UpgradeBaseNetwork: {
+			ActivationHeight: 0,
 		},
-		DeploymentTestDummyMinActivation: {
-			BitNumber:                 22,
-			CustomActivationThreshold: 1815,    // Only needs 90% hash rate.
-			MinActivationHeight:       10_0000, // Can only activate after height 10k.
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires
-			),
+		UpgradeTestDummy: {
+			ActivationHeight: 0,
 		},
-		DeploymentCSV: {
-			BitNumber: 0,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Unix(1462060800, 0), // May 1st, 2016
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Unix(1493596800, 0), // May 1st, 2017
-			),
+		UpgradePOS: {
+			ActivationHeight: 1441,
 		},
-		DeploymentSegwit: {
-			BitNumber: 1,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Unix(1479168000, 0), // November 15, 2016 UTC
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Unix(1510704000, 0), // November 15, 2017 UTC.
-			),
+		UpgradePOSV2: {
+			ActivationHeight: 1441,
+		},
+		UpgradeZC: {
+			ActivationHeight:    1441,
+			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
+		},
+		UpgradeZCV2: {
+			ActivationHeight:    1441,
+			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
+		},
+		UpgradeBIP65: {
+			ActivationHeight:    1441,
+			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
+		},
+		UpgradeZCPublic: {
+			ActivationHeight: 1441,
+		},
+		UpgradeV34: {
+			ActivationHeight:    1441,
+			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
+		},
+		UpgradeV40: {
+			ActivationHeight:    1441,
+			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
+		},
+		UpgradeV50Dummy: {
+			ActivationHeight: 1441,
 		},
 	},
-
-	// Mempool parameters
-	RelayNonStdTxs: false,
-
-	// Human-readable part for Bech32 encoded segwit addresses, as defined in
-	// BIP 173.
-	Bech32HRPSegwit: "bc", // always bc for main net
 
 	// Address encoding magics
-	PubKeyHashAddrID:        0x00, // starts with 1
-	ScriptHashAddrID:        0x05, // starts with 3
-	PrivateKeyID:            0x80, // starts with 5 (uncompressed) or K (compressed)
-	WitnessPubKeyHashAddrID: 0x06, // starts with p2
-	WitnessScriptHashAddrID: 0x0A, // starts with 7Xh
+	PubKeyHashAddrID: 139, // starts with m or n
+	ScriptHashAddrID: 19,  // starts with 2
+	PrivateKeyID:     239, // starts with 9 (uncompressed) or c (compressed)
+	StakingKeyID:     73,
 
 	// BIP32 hierarchical deterministic extended key magics
-	HDPrivateKeyID: [4]byte{0x04, 0x88, 0xad, 0xe4}, // starts with xprv
-	HDPublicKeyID:  [4]byte{0x04, 0x88, 0xb2, 0x1e}, // starts with xpub
+	HDPrivateKeyID: [4]byte{0x3a, 0x80, 0x58, 0x37}, // starts with xprv
+	HDPublicKeyID:  [4]byte{0x3a, 0x80, 0x61, 0xa0}, // starts with xpub
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 0,
+	HDCoinType: 303,
 }
 
 // RegressionNetParams defines the network parameters for the regression test
@@ -408,7 +361,6 @@ var RegressionNetParams = Params{
 	GenesisBlock:             &regTestGenesisBlock,
 	GenesisHash:              &regTestGenesisHash,
 	PowLimit:                 regressionPowLimit,
-	PowLimitBits:             0x207fffff,
 	CoinbaseMaturity:         100,
 	BIP0034Height:            100000000, // Not active - Permit ver 1 blocks
 	BIP0065Height:            1351,      // Used by regression tests
@@ -431,14 +383,8 @@ var RegressionNetParams = Params{
 	RuleChangeActivationThreshold: 108, // 75%  of MinerConfirmationWindow
 	MinerConfirmationWindow:       144,
 	Deployments: [DefinedDeployments]ConsensusDeployment{
-		DeploymentTestDummy: {
-			BitNumber: 28,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires
-			),
+		UpgradeBaseNetwork: {
+			MinActivationHeight: 0,
 		},
 		DeploymentTestDummyMinActivation: {
 			BitNumber:                 22,
@@ -471,17 +417,11 @@ var RegressionNetParams = Params{
 		},
 	},
 
-	// Mempool parameters
-	RelayNonStdTxs: true,
-
-	// Human-readable part for Bech32 encoded segwit addresses, as defined in
-	// BIP 173.
-	Bech32HRPSegwit: "bcrt", // always bcrt for reg test net
-
 	// Address encoding magics
-	PubKeyHashAddrID: 0x6f, // starts with m or n
-	ScriptHashAddrID: 0xc4, // starts with 2
-	PrivateKeyID:     0xef, // starts with 9 (uncompressed) or c (compressed)
+	PubKeyHashAddrID: 139, // starts with m or n
+	ScriptHashAddrID: 19,  // starts with 2
+	PrivateKeyID:     239, // starts with 9 (uncompressed) or c (compressed)
+	StakingKeyID:     73,
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID: [4]byte{0x04, 0x35, 0x83, 0x94}, // starts with tprv
@@ -510,7 +450,6 @@ var TestNet3Params = Params{
 	GenesisBlock:             &testNet3GenesisBlock,
 	GenesisHash:              &testNet3GenesisHash,
 	PowLimit:                 testNet3PowLimit,
-	PowLimitBits:             0x1d00ffff,
 	BIP0034Height:            21111,  // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
 	BIP0065Height:            581885, // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
 	BIP0066Height:            330776, // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
@@ -591,10 +530,6 @@ var TestNet3Params = Params{
 	// Mempool parameters
 	RelayNonStdTxs: true,
 
-	// Human-readable part for Bech32 encoded segwit addresses, as defined in
-	// BIP 173.
-	Bech32HRPSegwit: "tb", // always tb for test net
-
 	// Address encoding magics
 	PubKeyHashAddrID:        0x6f, // starts with m or n
 	ScriptHashAddrID:        0xc4, // starts with 2
@@ -609,228 +544,6 @@ var TestNet3Params = Params{
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
 	HDCoinType: 1,
-}
-
-// SimNetParams defines the network parameters for the simulation test Bitcoin
-// network.  This network is similar to the normal test network except it is
-// intended for private use within a group of individuals doing simulation
-// testing.  The functionality is intended to differ in that the only nodes
-// which are specifically specified are used to create the network rather than
-// following normal discovery rules.  This is important as otherwise it would
-// just turn into another public testnet.
-var SimNetParams = Params{
-	Name:        "simnet",
-	Net:         wire.SimNet,
-	DefaultPort: "18555",
-	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
-
-	// Chain parameters
-	GenesisBlock:             &simNetGenesisBlock,
-	GenesisHash:              &simNetGenesisHash,
-	PowLimit:                 simNetPowLimit,
-	PowLimitBits:             0x207fffff,
-	BIP0034Height:            0, // Always active on simnet
-	BIP0065Height:            0, // Always active on simnet
-	BIP0066Height:            0, // Always active on simnet
-	CoinbaseMaturity:         100,
-	SubsidyReductionInterval: 210000,
-	TargetTimespan:           time.Hour * 24 * 14, // 14 days
-	TargetTimePerBlock:       time.Minute * 10,    // 10 minutes
-	RetargetAdjustmentFactor: 4,                   // 25% less, 400% more
-	ReduceMinDifficulty:      true,
-	MinDiffReductionTime:     time.Minute * 20, // TargetTimePerBlock * 2
-	GenerateSupported:        true,
-
-	// Checkpoints ordered from oldest to newest.
-	Checkpoints: nil,
-
-	// Consensus rule change deployments.
-	//
-	// The miner confirmation window is defined as:
-	//   target proof of work timespan / target proof of work spacing
-	RuleChangeActivationThreshold: 75, // 75% of MinerConfirmationWindow
-	MinerConfirmationWindow:       100,
-	Deployments: [DefinedDeployments]ConsensusDeployment{
-		DeploymentTestDummy: {
-			BitNumber: 28,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires
-			),
-		},
-		DeploymentTestDummyMinActivation: {
-			BitNumber:                 22,
-			CustomActivationThreshold: 50,  // Only needs 50% hash rate.
-			MinActivationHeight:       600, // Can only activate after height 600.
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires
-			),
-		},
-		DeploymentCSV: {
-			BitNumber: 0,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires
-			),
-		},
-		DeploymentSegwit: {
-			BitNumber: 1,
-			DeploymentStarter: NewMedianTimeDeploymentStarter(
-				time.Time{}, // Always available for vote
-			),
-			DeploymentEnder: NewMedianTimeDeploymentEnder(
-				time.Time{}, // Never expires.
-			),
-		},
-	},
-
-	// Mempool parameters
-	RelayNonStdTxs: true,
-
-	// Human-readable part for Bech32 encoded segwit addresses, as defined in
-	// BIP 173.
-	Bech32HRPSegwit: "sb", // always sb for sim net
-
-	// Address encoding magics
-	PubKeyHashAddrID:        0x3f, // starts with S
-	ScriptHashAddrID:        0x7b, // starts with s
-	PrivateKeyID:            0x64, // starts with 4 (uncompressed) or F (compressed)
-	WitnessPubKeyHashAddrID: 0x19, // starts with Gg
-	WitnessScriptHashAddrID: 0x28, // starts with ?
-
-	// BIP32 hierarchical deterministic extended key magics
-	HDPrivateKeyID: [4]byte{0x04, 0x20, 0xb9, 0x00}, // starts with sprv
-	HDPublicKeyID:  [4]byte{0x04, 0x20, 0xbd, 0x3a}, // starts with spub
-
-	// BIP44 coin type used in the hierarchical deterministic path for
-	// address generation.
-	HDCoinType: 115, // ASCII for s
-}
-
-// SigNetParams defines the network parameters for the default public signet
-// Bitcoin network. Not to be confused with the regression test network, this
-// network is sometimes simply called "signet" or "taproot signet".
-var SigNetParams = CustomSignetParams(
-	DefaultSignetChallenge, DefaultSignetDNSSeeds,
-)
-
-// CustomSignetParams creates network parameters for a custom signet network
-// from a challenge. The challenge is the binary compiled version of the block
-// challenge script.
-func CustomSignetParams(challenge []byte, dnsSeeds []DNSSeed) Params {
-	// The message start is defined as the first four bytes of the sha256d
-	// of the challenge script, as a single push (i.e. prefixed with the
-	// challenge script length).
-	challengeLength := byte(len(challenge))
-	hashDouble := chainhash.DoubleHashB(
-		append([]byte{challengeLength}, challenge...),
-	)
-
-	// We use little endian encoding of the hash prefix to be in line with
-	// the other wire network identities.
-	net := binary.LittleEndian.Uint32(hashDouble[0:4])
-	return Params{
-		Name:        "signet",
-		Net:         wire.BitcoinNet(net),
-		DefaultPort: "38333",
-		DNSSeeds:    dnsSeeds,
-
-		// Chain parameters
-		GenesisBlock:             &sigNetGenesisBlock,
-		GenesisHash:              &sigNetGenesisHash,
-		PowLimit:                 sigNetPowLimit,
-		PowLimitBits:             0x1e0377ae,
-		BIP0034Height:            1,
-		BIP0065Height:            1,
-		BIP0066Height:            1,
-		CoinbaseMaturity:         100,
-		SubsidyReductionInterval: 210000,
-		TargetTimespan:           time.Hour * 24 * 14, // 14 days
-		TargetTimePerBlock:       time.Minute * 10,    // 10 minutes
-		RetargetAdjustmentFactor: 4,                   // 25% less, 400% more
-		ReduceMinDifficulty:      false,
-		MinDiffReductionTime:     time.Minute * 20, // TargetTimePerBlock * 2
-		GenerateSupported:        false,
-
-		// Checkpoints ordered from oldest to newest.
-		Checkpoints: nil,
-
-		// Consensus rule change deployments.
-		//
-		// The miner confirmation window is defined as:
-		//   target proof of work timespan / target proof of work spacing
-		RuleChangeActivationThreshold: 1916, // 95% of 2016
-		MinerConfirmationWindow:       2016,
-		Deployments: [DefinedDeployments]ConsensusDeployment{
-			DeploymentTestDummy: {
-				BitNumber: 28,
-				DeploymentStarter: NewMedianTimeDeploymentStarter(
-					time.Unix(1199145601, 0), // January 1, 2008 UTC
-				),
-				DeploymentEnder: NewMedianTimeDeploymentEnder(
-					time.Unix(1230767999, 0), // December 31, 2008 UTC
-				),
-			},
-			DeploymentTestDummyMinActivation: {
-				BitNumber:                 22,
-				CustomActivationThreshold: 1815,    // Only needs 90% hash rate.
-				MinActivationHeight:       10_0000, // Can only activate after height 10k.
-				DeploymentStarter: NewMedianTimeDeploymentStarter(
-					time.Time{}, // Always available for vote
-				),
-				DeploymentEnder: NewMedianTimeDeploymentEnder(
-					time.Time{}, // Never expires
-				),
-			},
-			DeploymentCSV: {
-				BitNumber: 29,
-				DeploymentStarter: NewMedianTimeDeploymentStarter(
-					time.Time{}, // Always available for vote
-				),
-				DeploymentEnder: NewMedianTimeDeploymentEnder(
-					time.Time{}, // Never expires
-				),
-			},
-			DeploymentSegwit: {
-				BitNumber: 29,
-				DeploymentStarter: NewMedianTimeDeploymentStarter(
-					time.Time{}, // Always available for vote
-				),
-				DeploymentEnder: NewMedianTimeDeploymentEnder(
-					time.Time{}, // Never expires
-				),
-			},
-		},
-
-		// Mempool parameters
-		RelayNonStdTxs: false,
-
-		// Human-readable part for Bech32 encoded segwit addresses, as defined in
-		// BIP 173.
-		Bech32HRPSegwit: "tb", // always tb for test net
-
-		// Address encoding magics
-		PubKeyHashAddrID:        0x6f, // starts with m or n
-		ScriptHashAddrID:        0xc4, // starts with 2
-		WitnessPubKeyHashAddrID: 0x03, // starts with QW
-		WitnessScriptHashAddrID: 0x28, // starts with T7n
-		PrivateKeyID:            0xef, // starts with 9 (uncompressed) or c (compressed)
-
-		// BIP32 hierarchical deterministic extended key magics
-		HDPrivateKeyID: [4]byte{0x04, 0x35, 0x83, 0x94}, // starts with tprv
-		HDPublicKeyID:  [4]byte{0x04, 0x35, 0x87, 0xcf}, // starts with tpub
-
-		// BIP44 coin type used in the hierarchical deterministic path for
-		// address generation.
-		HDCoinType: 1,
-	}
 }
 
 var (
@@ -884,9 +597,6 @@ func Register(params *Params) error {
 		return err
 	}
 
-	// A valid Bech32 encoded segwit address always has as prefix the
-	// human-readable part for the given net followed by '1'.
-	bech32SegwitPrefixes[params.Bech32HRPSegwit+"1"] = struct{}{}
 	return nil
 }
 
@@ -994,5 +704,4 @@ func init() {
 	mustRegister(&MainNetParams)
 	mustRegister(&TestNet3Params)
 	mustRegister(&RegressionNetParams)
-	mustRegister(&SimNetParams)
 }

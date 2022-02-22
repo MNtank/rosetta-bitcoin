@@ -1,4 +1,4 @@
-package eunod
+package bitcoin
 
 import (
 	"fmt"
