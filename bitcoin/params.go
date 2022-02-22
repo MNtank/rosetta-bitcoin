@@ -38,9 +38,9 @@ var EunoMainNetParams = chaincfg.Params{
 	GenesisHash:  &genesisHash,
 
 	// Address encoding magics
-	PubKeyHashAddrID:        0x81,
-	ScriptHashAddrID:        0x13,
-	PrivateKeyID:            0xEF,
+	PubKeyHashAddrID:        0x21,
+	ScriptHashAddrID:        0x11,
+	PrivateKeyID:            0x09,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
@@ -79,9 +79,9 @@ var EunoTestNet3Params = chaincfg.Params{
 	GenesisHash:  &testNet3GenesisHash,
 
 	// Address encoding magics
-	PubKeyHashAddrID:        0x81,
-	ScriptHashAddrID:        0x13,
-	PrivateKeyID:            0xEF,
+	PubKeyHashAddrID:        0x21,
+	ScriptHashAddrID:        0x11,
+	PrivateKeyID:            0x09,
 	WitnessPubKeyHashAddrID: 0x00,
 	WitnessScriptHashAddrID: 0x00,
 
