@@ -129,8 +129,8 @@ type Params struct {
 	FutureTimeDriftPoW          int32
 	FutureTimeDriftPoS          int32
 	PoolMaxTransactions         int32
-	ProposalEstablishmentTime   int
-	StakeMinAge                 int
+	ProposalEstablishmentTime   time.Duration
+	StakeMinAge                 time.Duration
 	StakeMinDepth               int
 	TargetTimespan              time.Duration
 	TargetTimespanV2            time.Duration
@@ -240,7 +240,7 @@ const (
 
 // MainNetParams defines the network parameters for the main Bitcoin network.
 var MainNetParams = Params{
-	Name:        "mainnet",
+	Name:        "main",
 	Net:         MainNet,
 	DefaultPort: "46462",
 	DNSSeeds: []DNSSeed{
@@ -260,11 +260,11 @@ var MainNetParams = Params{
 	FutureTimeDriftPoW:          7200,
 	FutureTimeDriftPoS:          180,
 	PoolMaxTransactions:         3,
-	ProposalEstablishmentTime:   60 * 60 * 24,
-	StakeMinAge:                 60 * 60,
+	ProposalEstablishmentTime:   time.Hour * 60 * 24,
+	StakeMinAge:                 time.Hour * 60,
 	StakeMinDepth:               600,
-	TargetTimespan:              time.Minute * 40 * 60, // 14 days
-	TargetTimespanV2:            time.Minute * 30 * 60, // 14 days
+	TargetTimespan:              time.Minute * 40 * 60,
+	TargetTimespanV2:            time.Minute * 30 * 60,
 	TargetSpacing:               time.Minute * 1 * 60,
 	TimeSlotLength:              15,
 
@@ -328,7 +328,7 @@ var MainNetParams = Params{
 			hashActivationBlock: "00000055bbced95bf1fe0b4eccaee23ece9d82ceae67e3a4ec4e757619159a9f",
 		},
 		UpgradeV50Dummy: {
-			ActivationHeight: 1441,
+			ActivationHeight: 0,
 		},
 	},
 
