@@ -50,7 +50,7 @@ var EunoMainNetParams = chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 0x8000012f,
+	HDCoinType: 0x12F,
 }
 
 var EunoRegressionNetParams = chaincfg.Params{
@@ -65,7 +65,7 @@ var EunoRegressionNetParams = chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 0x8000012f,
+	HDCoinType: 0x12F,
 }
 
 var EunoTestNet3Params = chaincfg.Params{
@@ -89,7 +89,7 @@ var EunoTestNet3Params = chaincfg.Params{
 	HDPrivateKeyID: [4]byte{0x3a, 0x80, 0x58, 0x37},
 	HDPublicKeyID:  [4]byte{0x3a, 0x80, 0x61, 0xa0},
 
-	HDCoinType: 0x8000012f,
+	HDCoinType: 0x12F,
 }
 
 func newHashFromStr(hexStr string) *chainhash.Hash {
