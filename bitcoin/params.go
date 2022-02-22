@@ -7,7 +7,6 @@ package bitcoin
 import (
 	"errors"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -563,11 +562,11 @@ var (
 )
 
 var (
-	registeredNets       = make(map[wire.BitcoinNet]struct{})
-	pubKeyHashAddrIDs    = make(map[byte]struct{})
-	scriptHashAddrIDs    = make(map[byte]struct{})
-	bech32SegwitPrefixes = make(map[string]struct{})
-	hdPrivToPubKeyIDs    = make(map[[4]byte][]byte)
+	registeredNets     = make(map[wire.BitcoinNet]struct{})
+	pubKeyHashAddrIDs  = make(map[byte]struct{})
+	scriptHashAddrIDs  = make(map[byte]struct{})
+	stakingHashAddrIDs = make(map[byte]struct{})
+	hdPrivToPubKeyIDs  = make(map[[4]byte][]byte)
 )
 
 // String returns the hostname of the DNS seed in human-readable form.
@@ -591,6 +590,7 @@ func Register(params *Params) error {
 	registeredNets[params.Net] = struct{}{}
 	pubKeyHashAddrIDs[params.PubKeyHashAddrID] = struct{}{}
 	scriptHashAddrIDs[params.ScriptHashAddrID] = struct{}{}
+	stakingHashAddrIDs[params.StakingKeyID] = struct{}{}
 
 	err := RegisterHDKeyID(params.HDPublicKeyID[:], params.HDPrivateKeyID[:])
 	if err != nil {
@@ -600,56 +600,27 @@ func Register(params *Params) error {
 	return nil
 }
 
-// mustRegister performs the same function as Register except it panics if there
-// is an error.  This should only be called from package init functions.
 func mustRegister(params *Params) {
 	if err := Register(params); err != nil {
 		panic("failed to register network: " + err.Error())
 	}
 }
 
-// IsPubKeyHashAddrID returns whether the id is an identifier known to prefix a
-// pay-to-pubkey-hash address on any default or registered network.  This is
-// used when decoding an address string into a specific address type.  It is up
-// to the caller to check both this and IsScriptHashAddrID and decide whether an
-// address is a pubkey hash address, script hash address, neither, or
-// undeterminable (if both return true).
 func IsPubKeyHashAddrID(id byte) bool {
 	_, ok := pubKeyHashAddrIDs[id]
 	return ok
 }
 
-// IsScriptHashAddrID returns whether the id is an identifier known to prefix a
-// pay-to-script-hash address on any default or registered network.  This is
-// used when decoding an address string into a specific address type.  It is up
-// to the caller to check both this and IsPubKeyHashAddrID and decide whether an
-// address is a pubkey hash address, script hash address, neither, or
-// undeterminable (if both return true).
+func IStakingAddrID(id byte) bool {
+	_, ok := stakingHashAddrIDs[id]
+	return ok
+}
+
 func IsScriptHashAddrID(id byte) bool {
 	_, ok := scriptHashAddrIDs[id]
 	return ok
 }
 
-// IsBech32SegwitPrefix returns whether the prefix is a known prefix for segwit
-// addresses on any default or registered network.  This is used when decoding
-// an address string into a specific address type.
-func IsBech32SegwitPrefix(prefix string) bool {
-	prefix = strings.ToLower(prefix)
-	_, ok := bech32SegwitPrefixes[prefix]
-	return ok
-}
-
-// RegisterHDKeyID registers a public and private hierarchical deterministic
-// extended key ID pair.
-//
-// Non-standard HD version bytes, such as the ones documented in SLIP-0132,
-// should be registered using this method for library packages to lookup key
-// IDs (aka HD version bytes). When the provided key IDs are invalid, the
-// ErrInvalidHDKeyID error will be returned.
-//
-// Reference:
-//   SLIP-0132 : Registered HD version bytes for BIP-0032
-//   https://github.com/satoshilabs/slips/blob/master/slip-0132.md
 func RegisterHDKeyID(hdPublicKeyID []byte, hdPrivateKeyID []byte) error {
 	if len(hdPublicKeyID) != 4 || len(hdPrivateKeyID) != 4 {
 		return ErrInvalidHDKeyID
@@ -662,9 +633,6 @@ func RegisterHDKeyID(hdPublicKeyID []byte, hdPrivateKeyID []byte) error {
 	return nil
 }
 
-// HDPrivateKeyToPublicKeyID accepts a private hierarchical deterministic
-// extended key id and returns the associated public key id.  When the provided
-// id is not registered, the ErrUnknownHDKeyID error will be returned.
 func HDPrivateKeyToPublicKeyID(id []byte) ([]byte, error) {
 	if len(id) != 4 {
 		return nil, ErrUnknownHDKeyID
@@ -680,10 +648,6 @@ func HDPrivateKeyToPublicKeyID(id []byte) ([]byte, error) {
 	return pubBytes, nil
 }
 
-// newHashFromStr converts the passed big-endian hex string into a
-// chainhash.Hash.  It only differs from the one available in chainhash in that
-// it panics on an error since it will only (and must only) be called with
-// hard-coded, and therefore known good, hashes.
 func newHashFromStr(hexStr string) *chainhash.Hash {
 	hash, err := chainhash.NewHashFromStr(hexStr)
 	if err != nil {
