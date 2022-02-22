@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/MNtank/rosetta-bitcoin/bitcoin"
-
 	"github.com/btcsuite/btcd/chaincfg"
+
 	"github.com/coinbase/rosetta-sdk-go/storage/encoder"
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
