@@ -38,7 +38,7 @@ var EunoMainNetParams = chaincfg.Params{
 	GenesisHash:  &genesisHash,
 
 	// Address encoding magics
-	PubKeyHashAddrID:        0x21,
+	PubKeyHashAddrID:        0x8B,
 	ScriptHashAddrID:        0x11,
 	PrivateKeyID:            0x9,
 	WitnessPubKeyHashAddrID: 0x00,

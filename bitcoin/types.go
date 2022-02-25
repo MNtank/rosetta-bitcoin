@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -84,6 +85,18 @@ const (
 	P2PKHScriptPubkeySize = 25               // P2PKH size
 )
 
+// CreateMainNetParams is a function to override default mainnet settings with address prefixes
+func CreateMainNetParams() *chaincfg.Params {
+	chaincfg.MainNetParams.PubKeyHashAddrID = 0x21
+	chaincfg.MainNetParams.ScriptHashAddrID = 0x11
+	chaincfg.MainNetParams.Bech32HRPSegwit = "euno"
+	chaincfg.MainNetParams.Name = "main"
+	chaincfg.MainNetParams.Net = 0xe9fdc490
+	chaincfg.MainNetParams.PrivateKeyID = 0x9
+
+	return &chaincfg.MainNetParams
+}
+
 var (
 	// MainnetGenesisBlockIdentifier is the genesis block for mainnet.
 	MainnetGenesisBlockIdentifier = &types.BlockIdentifier{
@@ -91,7 +104,7 @@ var (
 	}
 
 	// MainnetParams are the params for mainnet.
-	MainnetParams = &EunoMainNetParams
+	MainnetParams = CreateMainNetParams()
 
 	// MainnetCurrency is the *types.Currency for mainnet.
 	MainnetCurrency = &types.Currency{
