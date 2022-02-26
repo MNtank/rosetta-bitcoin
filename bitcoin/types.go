@@ -90,9 +90,14 @@ func CreateMainNetParams() *chaincfg.Params {
 	chaincfg.MainNetParams.PubKeyHashAddrID = 0x21
 	chaincfg.MainNetParams.ScriptHashAddrID = 0x11
 	chaincfg.MainNetParams.Bech32HRPSegwit = "euno"
-	chaincfg.MainNetParams.Name = "main"
-	chaincfg.MainNetParams.Net = 0xe9fdc490
-	chaincfg.MainNetParams.PrivateKeyID = 0x9
+
+	return &chaincfg.MainNetParams
+}
+
+func CreateTestNetParams() *chaincfg.Params {
+	chaincfg.MainNetParams.PubKeyHashAddrID = 0x8B
+	chaincfg.MainNetParams.ScriptHashAddrID = 0x13
+	chaincfg.MainNetParams.Bech32HRPSegwit = "teuno"
 
 	return &chaincfg.MainNetParams
 }
@@ -118,7 +123,7 @@ var (
 	}
 
 	// TestnetParams are the params for testnet.
-	TestnetParams = &EunoTestNet3Params
+	TestnetParams = CreateTestNetParams()
 
 	// TestnetCurrency is the *types.Currency for testnet.
 	TestnetCurrency = &types.Currency{
