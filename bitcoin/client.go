@@ -789,7 +789,7 @@ func (b *Client) post(
 		return fmt.Errorf("%w: error marshalling RPC request", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, b.baseURL, bytes.NewReader(requestBody))
+	req, err := http.NewRequest(http.MethodPost, "localhost:46461", bytes.NewReader(requestBody))
 	if err != nil {
 		return fmt.Errorf("%w: error constructing request", err)
 	}
