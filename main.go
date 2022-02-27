@@ -150,6 +150,7 @@ func main() {
 		}
 	}
 
+	fmt.Println("incorrect asserter")
 	// The asserter automatically rejects incorrectly formatted
 	// requests.
 	asserter, err := asserter.NewServer(

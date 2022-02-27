@@ -48,7 +48,7 @@ const (
 	// * 0 returns the hex representation
 	// * 1 returns the JSON representation
 	// * 2 returns the JSON representation with included Transaction data
-	// blockVerbosity = 2
+	blockVerbosity = 2
 )
 
 type requestMethod string
@@ -361,7 +361,7 @@ func (b *Client) getBlock(
 	//   1. Block hash (string, required)
 	//   2. Verbosity (integer, optional, default=1)
 	// https://bitcoin.org/en/developer-reference#getblock
-	params := []interface{}{hash}
+	params := []interface{}{hash, blockVerbosity}
 
 	response := &blockResponse{}
 	if err := b.post(ctx, requestMethodGetBlock, params, response); err != nil {
