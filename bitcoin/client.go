@@ -148,7 +148,6 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 		Dial: (&net.Dialer{
 			Timeout: dialTimeout,
 		}).Dial,
-		DisableCompression: true,
 	}
 
 	httpClient := &http.Client{
