@@ -17,6 +17,7 @@ package bitcoin
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -148,6 +149,7 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 		Dial: (&net.Dialer{
 			Timeout: dialTimeout,
 		}).Dial,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	httpClient := &http.Client{
