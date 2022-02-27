@@ -79,7 +79,6 @@ var (
 // Client is used by the indexer to sync blocks.
 type Client interface {
 	NetworkStatus(context.Context) (*types.NetworkStatusResponse, error)
-	PruneBlockchain(context.Context, int64) (int64, error)
 	GetRawBlock(context.Context, *types.PartialBlockIdentifier) (*bitcoin.Block, []string, error)
 	ParseBlock(
 		context.Context,
@@ -300,49 +299,6 @@ func (i *Indexer) Sync(ctx context.Context) error {
 	)
 
 	return syncer.Sync(ctx, startIndex, indexPlaceholder)
-}
-
-// Prune attempts to prune blocks in bitcoind every
-// pruneFrequency.
-func (i *Indexer) Prune(ctx context.Context) error {
-	logger := utils.ExtractLogger(ctx, "pruner")
-
-	tc := time.NewTicker(i.pruningConfig.Frequency)
-	defer tc.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Warnw("exiting pruner")
-			return ctx.Err()
-		case <-tc.C:
-			head, err := i.blockStorage.GetHeadBlockIdentifier(ctx)
-			if err != nil {
-				continue
-			}
-
-			// Must meet pruning conditions in bitcoin core
-			// Source:
-			// https://github.com/bitcoin/bitcoin/blob/a63a26f042134fa80356860c109edb25ac567552/src/rpc/blockchain.cpp#L953-L960
-			pruneHeight := head.Index - i.pruningConfig.Depth
-			if pruneHeight <= i.pruningConfig.MinHeight {
-				logger.Infow("waiting to prune", "min prune height", i.pruningConfig.MinHeight)
-				continue
-			}
-
-			logger.Infow("attempting to prune bitcoind", "prune height", pruneHeight)
-			prunedHeight, err := i.client.PruneBlockchain(ctx, pruneHeight)
-			if err != nil {
-				logger.Warnw(
-					"unable to prune bitcoind",
-					"prune height", pruneHeight,
-					"error", err,
-				)
-			} else {
-				logger.Infow("pruned bitcoind", "prune height", prunedHeight)
-			}
-		}
-	}
 }
 
 // BlockAdded is called by the syncer when a block is added.

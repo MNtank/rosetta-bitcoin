@@ -64,17 +64,6 @@ const (
 	mainnetRPCPort = 46461
 	testnetRPCPort = 46463
 
-	// min prune depth is 288:
-	// https://github.com/bitcoin/bitcoin/blob/ad2952d17a2af419a04256b10b53c7377f826a27/src/validation.h#L84
-	pruneDepth = int64(10000) //nolint
-
-	// min prune height (on mainnet):
-	// https://github.com/bitcoin/bitcoin/blob/62d137ac3b701aae36c1aa3aa93a83fd6357fde6/src/chainparams.cpp#L102
-	minPruneHeight = int64(100000) //nolint
-
-	// attempt to prune once an hour
-	pruneFrequency = 60 * time.Minute
-
 	// DataDirectory is the default location for all
 	// persistent data.
 	DataDirectory = "/data"
@@ -128,11 +117,6 @@ type Configuration struct {
 // using the ENVs in the environment.
 func LoadConfiguration(baseDirectory string) (*Configuration, error) {
 	config := &Configuration{}
-	config.Pruning = &PruningConfiguration{
-		Frequency: pruneFrequency,
-		Depth:     pruneDepth,
-		MinHeight: minPruneHeight,
-	}
 
 	modeValue := Mode(os.Getenv(ModeEnv))
 	switch modeValue {

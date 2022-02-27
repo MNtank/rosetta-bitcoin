@@ -55,7 +55,6 @@ func TestIndexer_Pruning(t *testing.T) {
 	defer utils.RemoveTempDir(newDir)
 
 	mockClient := &mocks.Client{}
-	pruneDepth := int64(10)
 	minHeight := int64(200)
 	cfg := &configuration.Configuration{
 		Network: &types.NetworkIdentifier{
@@ -65,7 +64,6 @@ func TestIndexer_Pruning(t *testing.T) {
 		GenesisBlockIdentifier: bitcoin.MainnetGenesisBlockIdentifier,
 		Pruning: &configuration.PruningConfiguration{
 			Frequency: 50 * time.Millisecond,
-			Depth:     pruneDepth,
 			MinHeight: minHeight,
 		},
 		IndexerPath: newDir,
@@ -88,32 +86,12 @@ func TestIndexer_Pruning(t *testing.T) {
 
 	// Timeout on first request
 	mockClient.On(
-		"PruneBlockchain",
 		mock.Anything,
 		mock.Anything,
 	).Return(
 		int64(-1),
 		errors.New("connection timeout"),
 	).Once()
-
-	// Requests after should work
-	mockClient.On(
-		"PruneBlockchain",
-		mock.Anything,
-		mock.Anything,
-	).Return(
-		int64(100),
-		nil,
-	).Run(
-		func(args mock.Arguments) {
-			currBlockResponse, err := i.GetBlockLazy(ctx, nil)
-			currBlock := currBlockResponse.Block
-			assert.NoError(t, err)
-			pruningIndex := args.Get(1).(int64)
-			assert.True(t, currBlock.BlockIdentifier.Index-pruningIndex >= pruneDepth)
-			assert.True(t, pruningIndex >= minHeight)
-		},
-	)
 
 	// Add blocks
 	waitForCheck := make(chan struct{})
@@ -178,11 +156,6 @@ func TestIndexer_Pruning(t *testing.T) {
 
 	go func() {
 		err := i.Sync(ctx)
-		assert.True(t, errors.Is(err, context.Canceled))
-	}()
-
-	go func() {
-		err := i.Prune(ctx)
 		assert.True(t, errors.Is(err, context.Canceled))
 	}()
 

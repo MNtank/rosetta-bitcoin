@@ -65,11 +65,6 @@ func TestLoadConfiguration(t *testing.T) {
 				Port:                   1000,
 				RPCPort:                mainnetRPCPort,
 				ConfigPath:             mainnetConfigPath,
-				Pruning: &PruningConfiguration{
-					Frequency: pruneFrequency,
-					Depth:     pruneDepth,
-					MinHeight: minPruneHeight,
-				},
 				Compressors: []*encoder.CompressorEntry{
 					{
 						Namespace:      transactionNamespace,
@@ -94,11 +89,6 @@ func TestLoadConfiguration(t *testing.T) {
 				Port:                   1000,
 				RPCPort:                testnetRPCPort,
 				ConfigPath:             testnetConfigPath,
-				Pruning: &PruningConfiguration{
-					Frequency: pruneFrequency,
-					Depth:     pruneDepth,
-					MinHeight: minPruneHeight,
-				},
 				Compressors: []*encoder.CompressorEntry{
 					{
 						Namespace:      transactionNamespace,

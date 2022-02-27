@@ -94,24 +94,3 @@ func (_m *Client) ParseBlock(_a0 context.Context, _a1 *bitcoin.Block, _a2 map[st
 
 	return r0, r1
 }
-
-// PruneBlockchain provides a mock function with given fields: _a0, _a1
-func (_m *Client) PruneBlockchain(_a0 context.Context, _a1 int64) (int64, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 int64
-	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}

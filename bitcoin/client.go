@@ -44,12 +44,6 @@ const (
 
 	// jSONRPCVersion is the JSON-RPC version we use for making requests
 	jSONRPCVersion = "1.0"
-
-	// blockVerbosity represents the verbose level used when fetching blocks
-	// * 0 returns the hex representation
-	// * 1 returns the JSON representation
-	// * 2 returns the JSON representation with included Transaction data
-	blockVerbosity = 2
 )
 
 type requestMethod string
@@ -66,9 +60,6 @@ const (
 
 	// https://developer.bitcoin.org/reference/rpc/getpeerinfo.html
 	requestMethodGetPeerInfo requestMethod = "getpeerinfo"
-
-	// https://developer.bitcoin.org/reference/rpc/pruneblockchain.html
-	requestMethodPruneBlockchain requestMethod = "pruneblockchain"
 
 	// https://developer.bitcoin.org/reference/rpc/sendrawtransaction.html
 	requestMethodSendRawTransaction requestMethod = "sendrawtransaction"
@@ -300,25 +291,6 @@ func (b *Client) SuggestedFeeRate(
 	return response.Result.FeeRate, nil
 }
 
-// PruneBlockchain prunes up to the provided height.
-// https://bitcoincore.org/en/doc/0.20.0/rpc/blockchain/pruneblockchain
-func (b *Client) PruneBlockchain(
-	ctx context.Context,
-	height int64,
-) (int64, error) {
-	// Parameters:
-	//   1. Height
-	// https://developer.bitcoin.org/reference/rpc/pruneblockchain.html#argument-1-height
-	params := []interface{}{height}
-
-	response := &pruneBlockchainResponse{}
-	if err := b.post(ctx, requestMethodPruneBlockchain, params, response); err != nil {
-		return -1, fmt.Errorf("%w: error pruning blockchain", err)
-	}
-
-	return response.Result, nil
-}
-
 // RawMempool returns an array of all transaction
 // hashes currently in the mempool.
 func (b *Client) RawMempool(
@@ -363,7 +335,7 @@ func (b *Client) getBlock(
 	//   1. Block hash (string, required)
 	//   2. Verbosity (integer, optional, default=1)
 	// https://bitcoin.org/en/developer-reference#getblock
-	params := []interface{}{hash, blockVerbosity}
+	params := []interface{}{hash}
 
 	response := &blockResponse{}
 	if err := b.post(ctx, requestMethodGetBlock, params, response); err != nil {

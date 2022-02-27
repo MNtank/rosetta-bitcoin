@@ -380,24 +380,6 @@ func (b blockResponse) Err() error {
 	)
 }
 
-type pruneBlockchainResponse struct {
-	Result int64          `json:"result"`
-	Error  *responseError `json:"error"`
-}
-
-func (p pruneBlockchainResponse) Err() error {
-	if p.Error == nil {
-		return nil
-	}
-
-	return fmt.Errorf(
-		"%w: error JSON RPC response, code: %d, message: %s",
-		ErrJSONRPCError,
-		p.Error.Code,
-		p.Error.Message,
-	)
-}
-
 type blockchainInfoResponse struct {
 	Result *BlockchainInfo `json:"result"`
 	Error  *responseError  `json:"error"`

@@ -10,7 +10,6 @@
     "initialblockdownload": false,
     "chainwork": "0000000000000000000000000000000000000000127a25606c744d562654d78c",
     "size_on_disk": 333786409564,
-    "pruned": false,
     "softforks": {
       "bip34": {
         "type": "buried",
