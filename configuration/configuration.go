@@ -20,7 +20,6 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/MNtank/rosetta-bitcoin/bitcoin"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -89,14 +88,6 @@ const (
 	PortEnv = "PORT"
 )
 
-// PruningConfiguration is the configuration to
-// use for pruning in the indexer.
-type PruningConfiguration struct {
-	Frequency time.Duration
-	Depth     int64
-	MinHeight int64
-}
-
 // Configuration determines how
 type Configuration struct {
 	Mode                   Mode
@@ -107,7 +98,6 @@ type Configuration struct {
 	Port                   int
 	RPCPort                int
 	ConfigPath             string
-	Pruning                *PruningConfiguration
 	IndexerPath            string
 	BitcoindPath           string
 	Compressors            []*encoder.CompressorEntry

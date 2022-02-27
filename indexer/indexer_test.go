@@ -55,18 +55,13 @@ func TestIndexer_Pruning(t *testing.T) {
 	defer utils.RemoveTempDir(newDir)
 
 	mockClient := &mocks.Client{}
-	minHeight := int64(200)
 	cfg := &configuration.Configuration{
 		Network: &types.NetworkIdentifier{
 			Network:    bitcoin.MainnetNetwork,
 			Blockchain: bitcoin.Blockchain,
 		},
 		GenesisBlockIdentifier: bitcoin.MainnetGenesisBlockIdentifier,
-		Pruning: &configuration.PruningConfiguration{
-			Frequency: 50 * time.Millisecond,
-			MinHeight: minHeight,
-		},
-		IndexerPath: newDir,
+		IndexerPath:            newDir,
 	}
 
 	i, err := Initialize(ctx, cancel, cfg, mockClient)

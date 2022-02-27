@@ -95,8 +95,7 @@ var _ services.Indexer = (*Indexer)(nil)
 type Indexer struct {
 	cancel context.CancelFunc
 
-	network       *types.NetworkIdentifier
-	pruningConfig *configuration.PruningConfiguration
+	network *types.NetworkIdentifier
 
 	client Client
 
@@ -220,7 +219,6 @@ func Initialize(
 	i := &Indexer{
 		cancel:         cancel,
 		network:        config.Network,
-		pruningConfig:  config.Pruning,
 		client:         client,
 		database:       localStore,
 		blockStorage:   blockStorage,
